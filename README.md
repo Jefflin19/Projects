@@ -1,7 +1,7 @@
 Welcome to my GitHub repository! This space showcases my coding projects across various fields, including data science, machine learning, data visualization, and statistics. Each project reflects my passion for solving problems, analyzing data, and building innovative solutions.
 
 ⚽ Background ✈️
-Hi, I'm Jefferey Lin, a soccer and travel enthusiast who has lived in the USA, Korea, Taiwan and China, and studied in the USA, Japan, Italy, and China. I've also previously worked in Korea and Taiwan. I started coding in high school, where my senior project was in R, and continued through college using Stata, earning a BA in Economics from Colby College. I recently graduated from UMass Dartmouth with a Master of Science in Data Science.
+Hi, I'm Jefferey Lin, a soccer and travel enthusiast who has lived in the USA, Korea, Taiwan and China, and studied in the USA, Japan, Italy, and China. I've also previously worked in Korea and Taiwan. I started coding in high school, where my senior project was in R, and continued through college using Stata, earning a BA in Economics and East Asian Studies from Colby College. I recently graduated from UMass Dartmouth with a Master of Science in Data Science.
 
 Featured Projects
 🏆 Predicting World Cup Revenue – A machine learning project forecasting the impact of major soccer tournaments on tourism revenue.
