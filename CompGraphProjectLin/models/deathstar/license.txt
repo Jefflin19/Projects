@@ -1,0 +1,11 @@
+Model Information:
+* title:	Death Star (Star Wars)
+* source:	https://sketchfab.com/3d-models/death-star-star-wars-699e5f635f7a4b21a4c0d2e3f5b68324
+* author:	Anthony Yanez (https://sketchfab.com/paulyanez)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Death Star (Star Wars)" (https://sketchfab.com/3d-models/death-star-star-wars-699e5f635f7a4b21a4c0d2e3f5b68324) by Anthony Yanez (https://sketchfab.com/paulyanez) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
