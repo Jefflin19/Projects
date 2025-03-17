@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Map</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+       
+        .map-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .map-image {
+            width: 100%; 
+            height: auto; 
+        }
+        
+        /* heading */
+        h1 {
+            color: red; 
+            font-weight: bold; 
+            font-family: cursive;
+            font-size: 65px; 
+        }
+        footer {
+            margin-top: 20px;
+        }
+
+        .note {
+            font-style: italic;
+            font-size: 35px; 
+            margin-top: 10px; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Choose Japan or USA:</h1>
+    <div class="map-container">
+        <img src="world.png" alt="World Map" class="map-image" usemap="#worldmap">
+        <map name="worldmap">
+            <!-- clickable region 4 usa, had to play around with the numbers -->
+            <area shape="rect" coords="100,100,400,300" alt="USA" href="USAmap.html" class="map-area">
+            
+            <!-- clickable region 4 Japan -->
+            <area shape="rect" coords="900,100,1100,300" alt="Japan" href="JapanMain.html" class="map-area">
+        </map>
+    </div>
+    <footer>
+        <div class="note">Data Visualization Project By Jefferey Lin, Bhaskar Verma, Antoine John</div>
+    </footer>
+</body>
+</html>

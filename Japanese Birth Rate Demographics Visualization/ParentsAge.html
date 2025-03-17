@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Average Parent Ages Time Series Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #chartContainer {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="chartContainer">
+        <div>
+            <label for="minYear">Min Year:</label>
+            <input type="number" id="minYear" min="0" value="0" onchange="updateChart()">
+            <label for="maxYear">Max Year:</label>
+            <input type="number" id="maxYear" min="0" value="0" onchange="updateChart()">
+        </div>
+
+        <canvas id="ageAverageChart"></canvas>
+    </div>
+
+    <script>
+        let ageAverageChart;
+        let ageAverageData;
+
+        // get data from japan birth csv
+        async function fetchData() {
+            const response = await fetch('japan_birth.csv');
+            const data = await response.text();
+            return data;
+        }
+
+        function parseData(csvData) {
+            const rows = csvData.trim().split('\n').slice(1);
+            return rows.map(row => {
+                const columns = row.split(',');
+                return {
+                    year: parseInt(columns[0]),
+                    mother_age_avg: parseFloat(columns[36]),
+                    father_age_avg: parseFloat(columns[47])
+                };
+            });
+        }
+
+        // create avg age chart
+        function createAgeAverageChart(data) {
+            const ctx = document.getElementById('ageAverageChart').getContext('2d');
+            ageAverageChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(entry => entry.year),
+                    datasets: [
+                        {
+                            label: 'Mother Age Avg',
+                            data: data.map(entry => entry.mother_age_avg),
+                            borderColor: 'rgb(255, 99, 132)',
+                            fill: false
+                        },
+                        {
+                            label: 'Father Age Avg',
+                            data: data.map(entry => entry.father_age_avg),
+                            borderColor: 'rgb(54, 162, 235)',
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, //allows charge responsiveness
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Average Parent Ages Time Series Chart',
+                            color: 'red',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                                } 
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'YEAR'
+                            },
+                            min: 0 
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'AVERAGE AGE'
+                            },
+                            min: 0 
+                        }
+                    }
+                }
+            });
+        }
+
+        
+        function updateChart() { //charges update when you change the range
+            const minYear = parseInt(document.getElementById('minYear').value);
+            const maxYear = parseInt(document.getElementById('maxYear').value);
+            const filteredData = ageAverageData.filter(entry => entry.year >= minYear && entry.year <= maxYear);
+            const labels = filteredData.map(entry => entry.year);
+            const motherAgeAvgData = filteredData.map(entry => entry.mother_age_avg);
+            const fatherAgeAvgData = filteredData.map(entry => entry.father_age_avg);
+
+            ageAverageChart.data.labels = labels;
+            ageAverageChart.data.datasets[0].data = motherAgeAvgData;
+            ageAverageChart.data.datasets[1].data = fatherAgeAvgData;
+            ageAverageChart.update();
+        }
+
+        // fetch and create the parents age chart
+        async function main() {
+            try {
+                const csvData = await fetchData();
+                ageAverageData = parseData(csvData);
+                const minYear = Math.min(...ageAverageData.map(entry => entry.year));
+                const maxYear = Math.max(...ageAverageData.map(entry => entry.year));
+                document.getElementById('minYear').setAttribute('min', minYear);
+                document.getElementById('minYear').setAttribute('max', maxYear);
+                document.getElementById('maxYear').setAttribute('min', minYear);
+                document.getElementById('maxYear').setAttribute('max', maxYear);
+                document.getElementById('minYear').value = minYear;
+                document.getElementById('maxYear').value = maxYear;
+                createAgeAverageChart(ageAverageData);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        main();
+
+        
+        window.addEventListener("resize", function() {
+            updateChart();
+        });
+
+        // 80% window size
+        const chartCanvas = document.getElementById('ageAverageChart');
+        chartCanvas.width = window.innerWidth * 0.8;
+        chartCanvas.height = window.innerHeight * 0.8;
+    </script>
+</body>
+</html>

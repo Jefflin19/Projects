@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Plots for Each State</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* Center the SVG horizontally and vertically */
+        #container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .line-plot {
+            fill: none;
+            stroke-width: 2;
+            stroke-linejoin: round;
+            stroke-linecap: round;
+        }
+
+        .state-label {
+            font-weight: bold;
+            font-size: 12px;
+            fill: black;
+        }
+
+        .grid line {
+            stroke: lightgray;
+            stroke-opacity: 0.7;
+        }
+
+        .axis-label {
+            font-size: 14px;
+            font-weight: bold;
+            fill: black;
+        }
+
+        /* Style for the button */
+        #backButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #backButton:hover {
+            background-color: #0056b3;
+        }
+
+        /* Style for the table */
+        #stateTable {
+            margin-left: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #stateTable th, #stateTable td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #stateTable th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        #yearSelect {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        <svg id="map" width="1000" height="600"></svg>
+    
+        <div id="yearSelect">
+            <label for="year">Select a year:</label>
+            <select name="year" id="year">
+                <!-- Generate options for the years from 1950 to 2022 -->
+                <script>
+                    for (let year = 1950; year <= 2022; year++) {
+                        const selected = year === 2022 ? 'selected' : ''; // Add 'selected' attribute for 2022
+                        document.write(`<option value="${year}" ${selected}>${year}</option>`);
+                    }
+                </script>
+            </select>
+        </div>
+    
+        <div id="stateTable"></div>
+    </div>
+    
+
+    <!-- Button to go back to USAmap.html -->
+    <button id="backButton" onclick="goBack()">Go back to USAmap.html</button>
+
+    <script>
+        // Function to navigate back to USAmap.html
+        function goBack() {
+            window.location.href = 'USAmap.html';
+        }
+
+        // Function to format numbers with commas
+        function formatNumberWithCommas(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        d3.csv("usable_us_data.csv").then(function(data) {
+            // Convert string data to numbers 
+            data.forEach(function(d) {
+                // Assuming each column starting from the second contains numeric data
+                for (var prop in d) {
+                    if (prop !== "State" && d.hasOwnProperty(prop)) {
+                        d[prop] = +d[prop];
+                    }
+                }
+            });
+
+            // Sort data based on the population in 2022
+            data.sort((a, b) => b["2022"] - a["2022"]);
+
+            // Function to draw line plots for each state
+            function drawLinePlots(selectedYear) {
+                const margin = { top: 50, right: 100, bottom: 50, left: 100 };
+                const width = 1000 - margin.left - margin.right;
+                const height = 600 - margin.top - margin.bottom;
+
+                const svg = d3.select("#map")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                // Extract years from the first data entry
+                const years = Object.keys(data[0]).filter(key => key !== "State");
+
+                // Filter data for the selected year
+                const selectedData = data.map(d => ({ State: d.State, Population: d[selectedYear] }));
+
+                // Update the table with the state data for the selected year
+                updateTable(selectedData);
+
+                // Define scales for x and y axes
+                const xScale = d3.scaleBand()
+                    .domain(years)
+                    .range([0, width])
+                    .padding(0.1);
+
+                const yScale = d3.scaleLinear()
+                    .domain([0, d3.max(data, d => d[selectedYear])])
+                    .nice()
+                    .range([height, 0]);
+
+                // Define line generator
+                const line = d3.line()
+                    .x((d, i) => xScale(years[i]))
+                    .y(d => yScale(d));
+
+                // Draw gridlines for y-axis
+                svg.append("g")
+                    .attr("class", "grid")
+                    .call(d3.axisLeft(yScale)
+                        .tickSize(-width)
+                        .tickFormat("")
+                    );
+
+                // Draw line plots for each state with transition
+                svg.selectAll(".line-plot")
+                    .data(data)
+                    .enter()
+                    .append("path")
+                    .attr("class", "line-plot")
+                    .attr("d", d => line(years.map(year => d[year])))
+                    .style("stroke", (d, i) => d3.schemeCategory10[i % 10]) // Assign different colors to each state
+                    .style("opacity", 0)
+                    .transition()
+                    .duration((d, i) => i * 500) // Delay based on the index of the data array
+                    .style("opacity", 1);
+
+                // Adding x-axis
+                svg.append("g")
+                    .attr("class", "x-axis")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(xScale).tickValues(years.filter(year => parseInt(year) % 5 === 0))) // Adjusted ticks for every 5 years);
+
+                // Adding y-axis
+                svg.append("g")
+                    .attr("class", "y-axis")
+                    .call(d3.axisLeft(yScale));
+
+                // Add x-axis label
+                svg.append("text")
+                    .attr("class", "axis-label")
+                    .attr("x", width / 2)
+                    .attr("y", height + margin.bottom)
+                    .attr("text-anchor", "middle")
+                    .text("Year");
+
+                // Add y-axis label
+                svg.append("text")
+                    .attr("class", "axis-label")
+                    .attr("transform", "rotate(-90)")
+                    .attr("x", -height / 2)
+                    .attr("y", -margin.left + 10)
+                    .attr("text-anchor", "middle")
+                    .text("Population");
+
+                // Add event listeners for mouseover and mouseout
+                svg.selectAll(".line-plot")
+                    .on("mouseover", function(d) {
+                        const currentState = d3.select(this);
+                        const currentStateData = currentState.data()[0];
+                        const currentStateName = currentStateData.State;
+                        svg.append("text")
+                            .attr("class", "state-label")
+                            .attr("x", width / 2)
+                            .attr("y", height + margin.bottom - 20)
+                            .attr("text-anchor", "middle")
+                            .text(`${currentStateName}: ${formatNumberWithCommas(currentStateData[selectedYear])}`)
+                            .style("font-weight", "bold")
+                            .style("fill", "steelblue");
+                    })
+                    .on("mouseout", function() {
+                        svg.selectAll(".state-label").remove();
+                    });
+            }
+
+            // Function to update the table with state data
+            function updateTable(selectedData) {
+                const table = d3.select("#stateTable");
+
+                // Remove previous table content
+                table.selectAll("*").remove();
+
+                // Append table header
+                const thead = table.append("thead");
+                const tbody = table.append("tbody");
+
+                thead.append("tr")
+                    .selectAll("th")
+                    .data(["State", "Population"])
+                    .enter()
+                    .append("th")
+                    .text(d => d);
+
+                // Append table rows with state data
+                const rows = tbody.selectAll("tr")
+                    .data(selectedData)
+                    .enter()
+                    .append("tr");
+
+                rows.selectAll("td")
+                    .data(d => Object.values(d))
+                    .enter()
+                    .append("td")
+                    .text(d => typeof d === "number" ? formatNumberWithCommas(d) : d);
+            }
+
+            // Initial draw with default year (2022)
+            drawLinePlots("2022");
+
+            // Add event listener for year selection change
+            d3.select("#year").on("change", function() {
+                const selectedYear = this.value;
+                // Update the table with data for the selected year
+                const selectedData = data.map(d => ({ State: d.State, Population: d[selectedYear] }));
+                updateTable(selectedData);
+            });
+        }).catch(function(error) {
+            console.error("Error loading the data:", error);
+        });
+    </script>
+</body>
+</html>

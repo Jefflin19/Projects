@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bar Chart Race</title>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow-x: auto;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        #chart-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #chart {
+            margin: auto;
+        }
+        .chart-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: rgb(255, 0, 0);
+            margin-top: 20px;
+        }
+        .tooltip {
+            position: absolute;
+            display: none;
+            background-color: rgba(250, 250, 250, 0.8);
+            border: 1px solid #ccc;
+            padding: 5px;
+            pointer-events: none;
+        }
+        .x-axis text { 
+            transform: rotate(-45deg); 
+            text-anchor: end; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chart-title">Number of Births Each Year In Japan</div>
+
+    <div id="chart-container">
+        <div id="chart"></div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        //Creating bar race chart
+        function createChart(width, height) {
+            d3.csv("japan_birth.csv").then(function(data) { //Loads data
+                data.forEach(d => {
+                    d.year = +d.year;
+                    d.birth_total = +d.birth_total;
+                    d.birth_male = +d.birth_male;
+                    d.birth_female = +d.birth_female;
+                });
+
+                //svg dimensions
+                const margin = { top: 20, right: 30, bottom: 50, left: 80 };
+                const svgWidth = width * 0.85 - margin.left - margin.right;
+                const svgHeight = height * 0.85 - margin.top - margin.bottom;
+
+                const svg = d3.select("#chart")
+                    .selectAll("svg")
+                    .data([null])
+                    .join("svg")
+                    .attr("width", svgWidth + margin.left + margin.right)
+                    .attr("height", svgHeight + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                const xScale = d3.scaleBand()
+                    .domain(data.map(d => d.year))
+                    .range([0, svgWidth])
+                    .padding(0.1);
+
+                const yScale = d3.scaleLinear()
+                    .domain([0, d3.max(data, d => d.birth_total)])
+                    .range([svgHeight, 0]);
+
+                const xAxis = d3.axisBottom(xScale);
+                const yAxis = d3.axisLeft(yScale).tickFormat(d3.format(",.0f"));
+
+                //adding the bars 2 the chart
+                let bars = svg.selectAll(".bar")
+                    .data(data)
+                    .enter()
+                    .append("rect")
+                    .attr("class", "bar")
+                    .attr("x", d => xScale(d.year))
+                    .attr("y", svgHeight)
+                    .attr("width", xScale.bandwidth())
+                    .attr("height", 0)
+                    .attr("fill", "steelblue");
+
+                // Animation, charts update
+                function updateBars(yearData) {
+                    bars = bars.data(yearData, d => d.year);
+
+                    bars.exit()
+                        .transition()
+                        .duration(500)
+                        .attr("height", 0)
+                        .remove();
+
+                    bars.transition()
+                        .duration(500)
+                        .attr("x", d => xScale(d.year))
+                        .attr("y", d => yScale(d.birth_total))
+                        .attr("height", d => svgHeight - yScale(d.birth_total));
+
+                    bars.enter()
+                        .append("rect")
+                        .attr("class", "bar")
+                        .attr("x", d => xScale(d.year))
+                        .attr("y", svgHeight)
+                        .attr("width", xScale.bandwidth())
+                        .attr("height", 0)
+                        .attr("fill", "steelblue")
+                        .on("mouseover", function(event, d) {
+                           //hover over a bar to see # of births and its year. 
+                            d3.select("#tooltip")
+                                .style("display", "block")
+                                .html(`<strong>Year:</strong> ${d.year}<br><strong>Births:</strong> ${d3.format(",")(d.birth_total)}`)
+                                .style("left", (event.pageX + 10) + "px")
+                                .style("top", (event.pageY - 20) + "px");
+                        })
+                        .on("mouseout", function() {
+                            d3.select("#tooltip").style("display", "none");
+                        })
+                        .transition()
+                        .duration(500)
+                        .attr("y", d => yScale(d.birth_total))
+                        .attr("height", d => svgHeight - yScale(d.birth_total));
+                }
+
+                function animateChart() {
+                    let yearIndex = 0;
+                    const interval = setInterval(() => {
+                        updateBars(data.slice(0, yearIndex + 1));
+                        yearIndex++;
+                        if (yearIndex >= data.length) {
+                            clearInterval(interval);
+                        }
+                    }, 100); // lower speed = faster
+                }
+
+                animateChart(); //start
+
+                svg.append("g")
+                    .attr("class", "x-axis")
+                    .attr("transform", `translate(0,${svgHeight})`)
+                    .call(xAxis);
+
+                svg.append("g")
+                    .attr("class", "y-axis")
+                    .call(yAxis);
+
+                svg.append("text")
+                    .attr("class", "x-label")
+                    .attr("x", svgWidth / 2)
+                    .attr("y", svgHeight + margin.bottom - 10)
+                    .style("text-anchor", "middle")
+                    .text("YEAR");
+
+                svg.append("text")
+                    .attr("class", "y-label")
+                    .attr("transform", "rotate(-90)")
+                    .attr("x", -svgHeight / 2)
+                    .attr("y", -margin.left + 20)
+                    .style("text-anchor", "middle")
+                    .text("# OF BIRTHS");
+            });
+        }
+
+        createChart(window.innerWidth, window.innerHeight);
+
+        // chart changes w/ window size, 
+        window.addEventListener("resize", function() {
+            d3.select("#chart").selectAll("svg").remove();
+            createChart(window.innerWidth, window.innerHeight); 
+        });
+    </script>
+</body>
+</html>

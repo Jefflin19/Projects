@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combined Birth Data Time Series Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #container {
+            text-align: center;
+        }
+
+        canvas {
+            width: 80vw;
+            height: 80vh;
+        }
+        #rateCharts canvas {
+    width: 70vw; 
+    height: 65vh; 
+}
+
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div>
+            <button onclick="showPopulationCharts()"># Births Per Year</button>
+            <button onclick="showRateCharts()">Birthing Ratios</button>
+            <button onclick="showChildrenChart()"># of Children</button>
+            <button onclick="showTotalPopulationChart()">Population</button>
+        </div>
+
+        <div id="populationCharts" style="display:none;"> 
+            <canvas id="Numofbirthchart"></canvas>
+            <div>
+                <input type="checkbox" id="toggleBirthTotal" checked onchange="toggleDataset(populationChart, 0)">
+                <label for="toggleBirthTotal" id="labelToggleBirthTotal">Birth Total</label>
+                <input type="checkbox" id="toggleBirthMale" checked onchange="toggleDataset(populationChart, 1)">
+                <label for="toggleBirthMale" id="labelToggleBirthMale">Birth Male</label>
+                <input type="checkbox" id="toggleBirthFemale" checked onchange="toggleDataset(populationChart, 2)">
+                <label for="toggleBirthFemale" id="labelToggleBirthFemale">Birth Female</label>
+            </div>
+        </div>
+
+        <div id="rateCharts" style="display:none;">
+            <canvas id="Birthratecharts"></canvas>
+            <div>
+                <input type="checkbox" id="toggleBirthRate" checked onchange="toggleDataset(rateChart, 0)">
+                <label for="toggleBirthRate" id="labelToggleBirthRate">Birth Rate</label>
+                <input type="checkbox" id="toggleBirthGender" checked onchange="toggleDataset(rateChart, 1)">
+                <label for="toggleBirthGender" id="labelToggleBirthGender">Birth Gender</label>
+                <input type="checkbox" id="toggleTotalFertility" checked onchange="toggleDataset(rateChart, 2)">
+                <label for="toggleTotalFertility" id="labelToggleTotalFertility">Total Fertility</label>
+                <p>Note: Birth rate is calculated as (birth_total / population_total) * 1,000.</p>
+                <p> Birth gender ratio is calculated as (birth_male / birth_female) * 1,000.</p>
+                <p> Total fertility rate is the average number of children born to a woman over her lifetime.</p>
+            </div>
+        </div>
+
+        <div id="childrenChart" style="display:none;">
+            <canvas id="childrenchart"></canvas>
+            <div>
+                <input type="checkbox" id="toggleFirstborn" checked onchange="toggleDataset(childrenChart, 0)">
+                <label for="toggleFirstborn" id="labelToggleFirstborn">Firstborn</label>
+                <input type="checkbox" id="toggleSecondborn" checked onchange="toggleDataset(childrenChart, 1)">
+                <label for="toggleSecondborn" id="labelToggleSecondborn">Secondborn</label>
+                <input type="checkbox" id="toggleThirdborn" checked onchange="toggleDataset(childrenChart, 2)">
+                <label for="toggleThirdborn" id="labelToggleThirdborn">Thirdborn</label>
+                <input type="checkbox" id="toggleForthborn" checked onchange="toggleDataset(childrenChart, 3)">
+                <label for="toggleForthborn" id="labelToggleForthborn">Forthborn</label>
+                <input type="checkbox" id="toggleFifthborn" checked onchange="toggleDataset(childrenChart, 4)">
+                <label for="toggleFifthborn" id="labelToggleFifthborn">Fifthborn and above</label>
+            </div>
+        </div>
+
+        <div id="totalPopulationChart" style="display:none;">
+            <canvas id="totpopchart"></canvas>
+            <div>
+                <input type="checkbox" id="toggleTotalPopulation" checked onchange="toggleDataset(totalPopulationChart, 0)">
+                <label for="toggleTotalPopulation" id="labelToggleTotalPopulation">Total Population</label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let populationChart;
+        let rateChart;
+        let childrenChart;
+        let totalPopulationChart;
+
+        // Getting the data from japan_birth.csv
+        async function fetchData() {
+            const response = await fetch('japan_birth.csv');
+            const data = await response.text();
+            return data;
+        }
+
+        // Parse data -> charts
+        function parsePopulationData(csvData) {
+            const rows = csvData.trim().split('\n').slice(1);
+            return rows.map(row => {
+                const columns = row.split(',');
+                return {
+                    year: parseInt(columns[0]),
+                    birth_total: parseFloat(columns[1]),
+                    birth_male: parseFloat(columns[2]),
+                    birth_female: parseFloat(columns[3])
+                };
+            });
+        }
+
+        // # of birth year chart creation
+        function createPopulationCharts(data) {
+            const ctx = document.getElementById('Numofbirthchart').getContext('2d');
+            populationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(entry => entry.year),
+                    datasets: [
+                        {
+                            label: 'Birth Total',
+                            data: data.map(entry => entry.birth_total),
+                            borderColor: 'rgb(255, 99, 132)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleBirthTotal').checked
+                        },
+                        {
+                            label: 'Birth Male',
+                            data: data.map(entry => entry.birth_male),
+                            borderColor: 'rgb(54, 162, 235)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleBirthMale').checked
+                        },
+                        {
+                            label: 'Birth Female',
+                            data: data.map(entry => entry.birth_female),
+                            borderColor: 'rgb(255, 192, 203)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleBirthFemale').checked
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false, // no resizing, if true, makes the graphs so little
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Number Of Births Time Series Chart',
+                            color: 'red',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                                }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'YEAR'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'NUMBER OF BIRTHS'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Have label text be the same color as the lines
+            setToggleTextColor(populationChart, 'labelToggleBirthTotal', 0);
+            setToggleTextColor(populationChart, 'labelToggleBirthMale', 1);
+            setToggleTextColor(populationChart, 'labelToggleBirthFemale', 2);
+        }
+
+        // parse csv -> birth rate charts. 
+        function parseRateData(csvData) {
+            const rows = csvData.trim().split('\n').slice(1);
+            return rows.map(row => {
+                const columns = row.split(',');
+                return {
+                    year: parseInt(columns[0]),
+                    birth_rate: parseFloat(columns[4]),
+                    birth_gender: parseFloat(columns[5]),
+                    total_fertility: parseFloat(columns[6])
+                };
+            });
+        }
+
+        function createRateCharts(data) {
+            const ctx = document.getElementById('Birthratecharts').getContext('2d');
+            rateChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(entry => entry.year),
+                    datasets: [
+                        {
+                            label: 'Birth Rate',
+                            data: data.map(entry => entry.birth_rate),
+                            borderColor: 'rgb(255, 99, 132)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleBirthRate').checked
+                        },
+                        {
+                            label: 'Birth Gender',
+                            data: data.map(entry => entry.birth_gender),
+                            borderColor: 'rgb(54, 162, 235)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleBirthGender').checked
+                        },
+                        {
+                            label: 'Total Fertility',
+                            data: data.map(entry => entry.total_fertility),
+                            borderColor: 'rgb(75, 192, 192)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleTotalFertility').checked
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false, 
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Birthing Ratio Time Series Chart',
+                            color: 'red',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                                }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'YEAR'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'RATE'
+                            }
+                        }
+                    }
+                }
+            });
+
+            
+            setToggleTextColor(rateChart, 'labelToggleBirthRate', 0);
+            setToggleTextColor(rateChart, 'labelToggleBirthGender', 1);
+            setToggleTextColor(rateChart, 'labelToggleTotalFertility', 2);
+        }
+
+        
+        function parseChildrenData(csvData) {
+            const rows = csvData.trim().split('\n').slice(1);
+            const filteredRows = rows.filter(row => {
+                const columns = row.split(',');
+                return parseInt(columns[0]) >= 1950; // Row starts @ 1950
+            });
+            return filteredRows.map(row => {
+                const columns = row.split(',');
+                return {
+                    year: parseInt(columns[0]),
+                    firstborn: parseFloat(columns[24]),
+                    secondborn: parseFloat(columns[25]),
+                    thirdborn: parseFloat(columns[26]),
+                    forthborn: parseFloat(columns[27]),
+                    fifthborn_and_above: parseFloat(columns[28])
+                };
+            });
+        }
+
+        function createChildrenChart(data) {
+            const ctx = document.getElementById('childrenchart').getContext('2d');
+            childrenChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(entry => entry.year),
+                    datasets: [
+                        {
+                            label: 'Firstborn',
+                            data: data.map(entry => entry.firstborn),
+                            borderColor: 'rgb(255, 99, 132)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleFirstborn').checked
+                        },
+                        {
+                            label: 'Secondborn',
+                            data: data.map(entry => entry.secondborn),
+                            borderColor: 'rgb(54, 162, 235)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleSecondborn').checked
+                        },
+                        {
+                            label: 'Thirdborn',
+                            data: data.map(entry => entry.thirdborn),
+                            borderColor: 'rgb(75, 192, 192)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleThirdborn').checked
+                        },
+                        {
+                            label: 'Forthborn',
+                            data: data.map(entry => entry.forthborn),
+                            borderColor: 'rgb(255, 205, 86)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleForthborn').checked
+                        },
+                        {
+                            label: 'Fifthborn and above',
+                            data: data.map(entry => entry.fifthborn_and_above),
+                            borderColor: 'rgb(153, 102, 255)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleFifthborn').checked
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false, 
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Number of Kids Time Series Chart',
+                            color: 'red',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                                } 
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'YEAR'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'NUMBER OF CHILDREN'
+                            }
+                        }
+                    }
+                }
+            });
+
+            
+            setToggleTextColor(childrenChart, 'labelToggleFirstborn', 0);
+            setToggleTextColor(childrenChart, 'labelToggleSecondborn', 1);
+            setToggleTextColor(childrenChart, 'labelToggleThirdborn', 2);
+            setToggleTextColor(childrenChart, 'labelToggleForthborn', 3);
+            setToggleTextColor(childrenChart, 'labelToggleFifthborn', 4);
+        }
+
+        // parse the data
+        function parseTotalPopulationData(csvData) {
+            const rows = csvData.trim().split('\n').slice(1);
+            return rows.map(row => {
+                const columns = row.split(',');
+                return {
+                    year: parseInt(columns[0]),
+                    population_total: parseFloat(columns[7])
+                };
+            });
+        }
+
+        // creating the total pop chart
+        function createTotalPopulationChart(data) {
+            const ctx = document.getElementById('totpopchart').getContext('2d');
+            totalPopulationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(entry => entry.year),
+                    datasets: [
+                        {
+                            label: 'Total Population',
+                            data: data.map(entry => entry.population_total),
+                            borderColor: 'rgb(255, 99, 132)',
+                            fill: false,
+                            hidden: !document.getElementById('toggleTotalPopulation').checked
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false, 
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Total Population Time Series Chart',
+                            color: 'red',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                                } 
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'YEAR'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'JAPAN POPULATION'
+                            }
+                        }
+                    }
+                }
+            });
+
+            setToggleTextColor(totalPopulationChart, 'labelToggleTotalPopulation', 0);
+        }
+
+        // show the charts
+        function showPopulationCharts() {
+            document.getElementById('populationCharts').style.display = 'block';
+            document.getElementById('rateCharts').style.display = 'none';
+            document.getElementById('childrenChart').style.display = 'none';
+            document.getElementById('totalPopulationChart').style.display = 'none';
+        }
+
+        function showRateCharts() {
+            document.getElementById('populationCharts').style.display = 'none';
+            document.getElementById('rateCharts').style.display = 'block';
+            document.getElementById('childrenChart').style.display = 'none';
+            document.getElementById('totalPopulationChart').style.display = 'none';
+        }
+
+        function showChildrenChart() {
+            document.getElementById('populationCharts').style.display = 'none';
+            document.getElementById('rateCharts').style.display = 'none';
+            document.getElementById('childrenChart').style.display = 'block';
+            document.getElementById('totalPopulationChart').style.display = 'none';
+        }
+
+        function showTotalPopulationChart() {
+            document.getElementById('populationCharts').style.display = 'none';
+            document.getElementById('rateCharts').style.display = 'none';
+            document.getElementById('childrenChart').style.display = 'none';
+            document.getElementById('totalPopulationChart').style.display = 'block';
+        }
+  
+        function toggleDataset(chart, datasetIndex) {
+            chart.data.datasets[datasetIndex].hidden = !chart.data.datasets[datasetIndex].hidden; //hides chart when toggled
+            chart.update();
+        }
+
+        function setToggleTextColor(chart, labelId, datasetIndex) {
+            const label = document.getElementById(labelId);           //makes the colors
+            const borderColor = chart.data.datasets[datasetIndex].borderColor;
+            label.style.color = borderColor;
+        }
+
+        async function main() {                  //getting the data and creating the charts
+            try {
+                const csvData = await fetchData();
+
+                const parsedPopulationData = parsePopulationData(csvData);
+                createPopulationCharts(parsedPopulationData);
+
+                const parsedRateData = parseRateData(csvData);
+                createRateCharts(parsedRateData);
+
+                const parsedChildrenData = parseChildrenData(csvData);
+                createChildrenChart(parsedChildrenData);
+
+                const parsedTotalPopulationData = parseTotalPopulationData(csvData);
+                createTotalPopulationChart(parsedTotalPopulationData);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        main();
+    </script>
+</body>
+</html>
