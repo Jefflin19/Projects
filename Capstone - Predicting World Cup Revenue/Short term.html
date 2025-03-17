@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Cup Tourism Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0; 
+            padding: 20px;
+            display: flex;
+        }
+
+        #imageContainer {
+            flex: 1; /* 1/3 of page */
+            display: flex;
+            align-items: center; /* Center the image vertically */
+            justify-content: center; /* Center the image horizontally */
+            height: 1000px;
+        }
+
+        #timelineImage {
+            max-width: 750px; 
+            height: 100%; 
+            object-fit: contain;
+        }
+
+        #chartContainer {
+            flex: 2; /* 2/3 of page */
+            padding-left: 20px; 
+            display: flex;
+            flex-direction: column; /* vertical staxs */
+        }
+
+        canvas {
+            max-width: 1000px; 
+            margin: auto; 
+        }
+
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        #backButton {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #backButton:hover {
+            background-color: #0056b3;
+        }
+
+        iframe {
+            display: none;
+            margin: 20px auto;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="imageContainer">
+        <img id="timelineImage" src="timeline.png" alt="Timeline">
+    </div>
+    <div id="chartContainer">
+        <h1>World Cup Tourism Visualization</h1>
+        <button id="backButton" onclick="goBack()">Go Back to Main</button>
+
+        <canvas id="myChart" width="0" height="0"></canvas>
+
+        <button id="combineButton">Combine Korea & Japan and USA, Canada, Mexico</button>
+        <button id="revenueButton">Show Tourism Revenue</button>
+        <button id="pieChartButton">Host Expenditure</button>
+
+        <iframe id="pieChartFrame" src="plotly_pie_chart.html" width="1200" height="800"></iframe>
+    </div>
+
+    <script>
+        let originalData = [];
+        let revenueData = [];
+        let myCharts = [];
+        const MAX_CHARTS = 4;
+
+        fetch('Visitors.xlsx')
+            .then(response => response.arrayBuffer())
+            .then(data => {
+                const workbook = XLSX.read(data, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                // rows 2 use
+                const filteredData = jsonData.slice(0, 11).map(row => row.slice(0, 12));
+                originalData = filteredData;
+
+                const labels = filteredData[0].slice(1); //years row
+                const datasets = filteredData.slice(1).map((row, index) => ({
+                    label: row[0], // 1st column = country
+                    data: row.slice(1),
+                    fill: false,
+                    borderColor: `rgba(${index * 40 % 255}, ${index * 70 % 255}, ${index * 100 % 255}, 1)`,
+                    tension: 0.1
+                }));
+
+                createChart(labels, datasets, 'myChart');
+            })
+            .catch(error => console.error('Error fetching the Excel file:', error));
+
+        fetch('Tournament.csv')
+            .then(response => response.text())
+            .then(data => {
+                const rows = data.split('\n').map(row => row.split(','));
+                revenueData = rows.slice(1); //skip 1st row
+
+                const revenueLabels = ['World Cup Year -2', 'World Cup Year -1', 'World Cup Year', 'World Cup Year +1', 'World Cup Year +2'];
+                const revenueDatasets = revenueData.slice(0, 6).map((row, index) => ({
+                    label: `${row[0]} - ${row[2]}`,
+                    data: [
+                        Number(row[16]), // 'Tourism Revenue -2'
+                        Number(row[17]), // 'Tourism Revenue -1'
+                        Number(row[26]), // 'Tournament Year Tourism Revenue'
+                        Number(row[18]), // 'Tourism Revenue +1'
+                        Number(row[19])  // 'Tourism Revenue +2'
+                    ],
+                    fill: false,
+                    borderColor: `rgba(${index * 40 % 255}, ${index * 70 % 255}, ${index * 100 % 255}, 1)`,
+                    tension: 0.1
+                }));
+
+                document.getElementById('revenueButton').addEventListener('click', () => {
+                    createRevenueChart(revenueLabels, revenueDatasets);
+                });
+
+                document.getElementById('pieChartButton').addEventListener('click', () => {
+                    const pieChartFrame = document.getElementById('pieChartFrame');
+                    pieChartFrame.style.display = pieChartFrame.style.display === 'none' ? 'block' : 'none';
+                });
+            })
+            .catch(error => console.error('Error fetching the CSV file:', error));
+
+        function createChart(labels, datasets, chartId) {
+            if (myCharts.length >= MAX_CHARTS) {
+                alert("Maximum number of charts reached!");
+                return;
+            }
+
+            const data = {
+                labels: labels,
+                datasets: datasets
+            };
+
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Visitors'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Years'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    const index = tooltipItems[0].dataIndex;
+                                    const worldCupYear = getWorldCupYear(tooltipItems[0].datasetIndex);
+                                    const actualYear = worldCupYear + 0;
+
+                                    const countryLabel = tooltipItems[0].dataset.label;
+                                    return `${countryLabel} ${actualYear}`;
+                                },
+                                label: function(tooltipItem) {
+                                    return `Visitors: ${tooltipItem.raw}`;
+                                }
+                            }
+                        }
+                    }
+                },
+            };
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 400;
+            document.getElementById('chartContainer').appendChild(canvas);
+
+            const newChart = new Chart(canvas, config);
+            myCharts.push(newChart); //store new chart
+        }
+
+        function getWorldCupYear(index) {
+            switch(index) {
+                case 0: return 2002; // Korea
+                case 1: return 2002; // Japan
+                case 2: return 2006; // Germany
+                case 3: return 2010; // South Africa
+                case 4: return 2014; // Brazil
+                case 5: return 2018; // Russia
+                case 6: return 2022; // Qatar
+                case 7: return 2026; // USA
+                case 8: return 2026; // Canada
+                case 9: return 2026; // Mexico
+                default: return 0;
+            }
+        }
+
+        document.getElementById('combineButton').addEventListener('click', () => {
+    console.log("Combine button clicked");
+
+    // Combine Korea + Japan
+    const koreaJapanData = originalData[1].slice(1).map((val, index) => {
+        return val + originalData[2][index + 1];
+    });
+
+    // Combine USA + Canada + Mexico
+    const usaCanadaMexicoData = originalData[7].slice(1).map((val, index) => {
+        return val + originalData[8][index + 1] + originalData[9][index + 1];
+    });
+
+    console.log("Korea & Japan combined data: ", koreaJapanData);
+    console.log("USA, Canada & Mexico combined data: ", usaCanadaMexicoData);
+
+    // Labels for x-axis (Years)
+    const labels = originalData[0].slice(1);
+
+    // Individual datasets (Germany, South Africa, Brazil, etc.)
+    const individualDatasets = originalData.slice(3, 7).map((row, index) => ({
+        label: row[0], // Country name
+        data: row.slice(1), // Data for each year
+        fill: false,
+        borderColor: `rgba(${index * 40 % 255}, ${index * 70 % 255}, ${index * 100 % 255}, 1)`,
+        tension: 0.1
+    }));
+
+    // Add combined datasets for Korea & Japan and USA, Canada & Mexico
+    const combinedDatasets = [
+        {
+            label: 'Combined Korea & Japan',
+            data: koreaJapanData,
+            fill: false,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            tension: 0.1
+        },
+        {
+            label: 'Combined USA, Canada & Mexico',
+            data: usaCanadaMexicoData,
+            fill: false,
+            borderColor: 'rgba(54, 162, 235, 1)',
+            tension: 0.1
+        }
+    ];
+
+    // Merge individual datasets with combined datasets
+    const datasets = [...individualDatasets, ...combinedDatasets];
+
+    // Create the chart
+    createChart(labels, datasets, 'myChart');
+});
+
+        function createRevenueChart(labels, datasets) {
+            const data = {
+                labels: labels,
+                datasets: datasets
+            };
+
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Tourism Revenue'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Years'
+                            }
+                        }
+                    },
+                },
+            };
+
+            const revenueCanvas = document.createElement('canvas');
+            revenueCanvas.width = 800;
+            revenueCanvas.height = 400;
+            document.getElementById('chartContainer').appendChild(revenueCanvas);
+            new Chart(revenueCanvas, config);
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>

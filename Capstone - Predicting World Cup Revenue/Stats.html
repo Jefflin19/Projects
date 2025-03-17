@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Cup Data Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 20px;
+        }
+        canvas {
+            max-width: 1200px; 
+            height: 600px; 
+            margin: 40px auto;
+            display: block;
+        }
+        h1 {
+            text-align: center;
+        }
+        .back-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #ff0000; 
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+        .back-button:hover {
+            background-color: #0056b3; 
+        }
+    </style>
+</head>
+<body>
+    <h1>World Cup Data Visualization</h1>
+
+    <a href="main.html" class="back-button">Back to Main Page</a>
+
+    
+    <canvas id="attendanceCapacityChart"></canvas>
+    <canvas id="averageTicketPriceChart"></canvas>
+    <canvas id="hostExpenditureChart"></canvas>
+    <canvas id="hotelOccupancyChart"></canvas>
+
+    <script>
+        fetch('Tournament.csv')
+            .then(response => response.text())
+            .then(data => {
+                const rows = data.split('\n').slice(1); // Skip header row
+                const years = [];
+                const averageAttendance = [];
+                const averageStadiumCapacity = [];
+                const averageTicketPrices = [];
+                const hostExpenditure = [];
+                const hotelOccupancyOthers = [];
+                const hotelOccupancyTournament = [];
+                const combinedLabels = []; 
+
+                rows.forEach((row, index) => {
+                    if (index === 6) return; //skips usa mexico row since no data 
+                    const cols = row.split(',');
+                    if (cols.length > 1) { // 
+                        const year = cols[0].trim(); // Year
+                        const attendance = parseFloat(cols[7]) || null; // Average Attendance
+                        const capacity = parseFloat(cols[6]) || null; // Average Stadium Capacity
+                        const ticketPrice = parseFloat(cols[10]) || null; // Average Ticket Prices
+                        const expenditure = parseFloat(cols[23]) || null; // Host Expenditure
+                        const occupancyOthers = parseFloat(cols[24]) || null; // Hotel Occupancy Others %
+                        const occupancyTournament = parseFloat(cols[25]) || null; // Hotel Occupancy Tournament Month %
+                        const secondColumn = cols[2].trim(); // Column 2
+
+            
+                        const combinedLabel = `${year} - ${secondColumn}`;
+                        combinedLabels.push(combinedLabel);
+
+                        // nulls
+                        if (year) years.push(year);
+                        if (attendance !== null) averageAttendance.push(attendance);
+                        if (capacity !== null) averageStadiumCapacity.push(capacity);
+                        if (ticketPrice !== null) averageTicketPrices.push(ticketPrice);
+                        if (expenditure !== null) hostExpenditure.push(expenditure);
+                        if (occupancyOthers !== null) hotelOccupancyOthers.push(occupancyOthers);
+                        if (occupancyTournament !== null) hotelOccupancyTournament.push(occupancyTournament);
+                    }
+                });
+
+                // Combined attendance and capacity chart
+                const attendanceCapacityCtx = document.getElementById('attendanceCapacityChart').getContext('2d');
+                new Chart(attendanceCapacityCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: combinedLabels, 
+                        datasets: [
+                            {
+                                label: 'Average Attendance',
+                                data: averageAttendance,
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            },
+                            {
+                                label: 'Average Stadium Capacity',
+                                data: averageStadiumCapacity,
+                                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Average Attendance and Stadium Capacity For Each World Cup' 
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Average ticket prices chart
+                const averageTicketPriceCtx = document.getElementById('averageTicketPriceChart').getContext('2d');
+                new Chart(averageTicketPriceCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: combinedLabels,
+                        datasets: [{
+                            label: 'Average Ticket Prices (USD)',
+                            data: averageTicketPrices,
+                            backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Average Ticket Prices For Each World Cup' 
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Host expenditure chart
+                const hostExpenditureCtx = document.getElementById('hostExpenditureChart').getContext('2d');
+                new Chart(hostExpenditureCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: combinedLabels,
+                        datasets: [{
+                            label: 'Host Expenditure (in billions)',
+                            data: hostExpenditure.map(value => value / 1e9), // Convert to billions
+                            borderColor: 'rgba(201, 72, 232, 1)',
+                            backgroundColor: 'rgba(201, 72, 232, 0.2)',
+                            fill: true,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Host Expenditure For Each World Cup'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Combined hotel occupancy chart
+                const combinedHotelOccupancyCtx = document.getElementById('hotelOccupancyChart').getContext('2d');
+                new Chart(combinedHotelOccupancyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: combinedLabels,
+                        datasets: [
+                            {
+                                label: 'Hotel Occupancy Non World Cup Months (%)',
+                                data: hotelOccupancyOthers,
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                fill: true,
+                            },
+                            {
+                                label: 'Hotel Occupancy During the World Cup (%)',
+                                data: hotelOccupancyTournament,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                fill: true,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Hotel Occupancy Over Years'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching the CSV file:', error));
+    </script>   
+</body>
+</html>

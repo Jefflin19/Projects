@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Series Charts with Animation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        #backButton {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #backButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <button id="backButton" onclick="location.href='Main.html'">Go Back</button>
+
+    <h2>Tourism Revenue Time Series</h2>
+    <canvas id="revenueChart" width="400" height="200"></canvas>
+    <div id="revenueButtons"></div>
+    
+    <h2>Number of Visitors Time Series</h2>
+    <canvas id="visitorsChart" width="400" height="200"></canvas>
+    <div id="visitorsButtons"></div>
+
+    <h2>Country-Specific Time Series</h2>
+    <div id="countryChartContainer"></div> 
+
+    <script>
+        function animateChart(chart, fullLabels, fullData) {
+            let currentIndex = 0;
+
+            const interval = setInterval(() => {
+                if (currentIndex < fullLabels.length) {
+                    chart.data.labels.push(fullLabels[currentIndex]);
+                    chart.data.datasets.forEach((dataset) => {
+                        dataset.data.push(fullData[dataset.index][currentIndex]);
+                    });
+                    chart.update();
+                    currentIndex++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 500); 
+        }
+
+        // Function 2 create a country-specific chart
+        function createCountryChart(country, labels, data, chartTitle, yLabel) {
+            const countryChartContainer = document.getElementById('countryChartContainer');
+            countryChartContainer.innerHTML = '';
+
+            const canvas = document.createElement('canvas');
+            countryChartContainer.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: country,
+                        data: data,
+                        borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: chartTitle
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Year'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: yLabel
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function handleButtonClick(chartType, country, labels, data) {
+            let chartTitle, yLabel;
+            if (chartType === 'revenue') {
+                chartTitle = `International Tourist Expenditure for ${country}`;
+                yLabel = 'Expenditure (In Billions USD)';
+            } else {
+                chartTitle = `Number of International Visitors for ${country}`;
+                yLabel = 'Number of International Visitors (In Millions)';
+            }
+
+            createCountryChart(country, labels, data, chartTitle, yLabel);
+        }
+
+        function generateCountryButtons(chartType, data) {
+            const container = chartType === 'revenue' ? document.getElementById('revenueButtons') : document.getElementById('visitorsButtons');
+            data.index.forEach((country, i) => {
+                const button = document.createElement('button');
+                button.textContent = country;
+                button.addEventListener('click', () => {
+                    handleButtonClick(chartType, country, data.columns, data.data[i]);
+                });
+                container.appendChild(button);
+            });
+        }
+
+        // Fetch and create the revenue chart
+        fetch('revenue.json')
+            .then(response => response.json())
+            .then(data => {
+                const fullLabels = data.columns;
+                const fullDatasets = data.data;
+                const datasets = [];
+
+                data.index.forEach((variable, rowIndex) => {
+                    datasets.push({
+                        label: variable,
+                        data: [],
+                        index: rowIndex,
+                        borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`,
+                        fill: false
+                    });
+                });
+
+                const ctx = document.getElementById('revenueChart').getContext('2d');
+                const revenueChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'International Tourist Expenditure Over Time'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Year'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Expenditure (In Billions USD)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                animateChart(revenueChart, fullLabels, fullDatasets);
+                generateCountryButtons('revenue', data);
+            })
+            .catch(error => console.error('Error loading revenue JSON data:', error));
+
+        // Fetch and create the visitors chart
+        fetch('visitors.json')
+            .then(response => response.json())
+            .then(data => {
+                const fullLabels = data.columns;
+                const fullDatasets = data.data;
+                const datasets = [];
+
+                data.index.forEach((variable, rowIndex) => {
+                    datasets.push({
+                        label: variable,
+                        data: [],
+                        index: rowIndex,
+                        borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`,
+                        fill: false
+                    });
+                });
+
+                const ctx = document.getElementById('visitorsChart').getContext('2d');
+                const visitorsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Number of International Visitors Over Time'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Year'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Number of International Visitors (In Millions)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                animateChart(visitorsChart, fullLabels, fullDatasets);
+                generateCountryButtons('visitors', data);
+            })
+            .catch(error => console.error('Error loading visitors JSON data:', error));
+    </script>
+</body>
+</html>

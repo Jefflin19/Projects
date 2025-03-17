@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Prediction GUI</title>
+    <style>
+        body {
+            background-image: url('FinalStadium.png');
+            background-size: cover; 
+            background-position: center; 
+            color: white; 
+            display: flex;
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            text-align: center; 
+        }
+
+        /* back button*/
+        .go-back {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        
+        <button onclick="openGui()">Open 2026 Tourism Prediction GUI</button>
+    </div>
+
+  
+    <button class="go-back" onclick="goBack()">Go Back</button>
+
+    <script>
+        function openGui() {
+            fetch('http://134.88.140.152:5000/open_gui')  // server ip to flask
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(data => alert(data))
+                .catch(error => console.error('There was a problem with the fetch operation:', error));
+        }
+
+        function goBack() {
+            window.location.href = 'Main.html';  //load up Masters and app in terminal 1st
+        }
+    </script>
+</body>
+</html> 
