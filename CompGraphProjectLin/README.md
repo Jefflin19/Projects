@@ -1,14 +1,8 @@
-CIS454 Final Project: Recon Mission
 
-Authors
 
-Jefferey LinData Science Graduate ProgramCIS454 – Computer GraphicsNatick, USAID: 02142963
+# **Project Overview**
 
-Ronald BrodeurComputer Science UndergraduateCIS454 – Computer GraphicsFall River, USAID: 01813534
-
-Project Overview
-
-This project showcases the application of key techniques learned throughout the CIS454 course by creating a unique, interactive 3D story. We developed a Star Wars-themed action scene using computer graphics techniques such as Bezier curves, translations, audio, multitexturing, and more. The final product is an immersive space scene viewed from a first-person perspective.
+This project creates a interactive 3D story. We developed a Star Wars-themed action scene using computer graphics techniques such as Bezier curves, translations, audio, multitexturing, and more. The final product is an immersive space scene viewed from a first-person perspective.
 
 Keywords
 
