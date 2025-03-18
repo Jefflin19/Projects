@@ -1,5 +1,6 @@
 # **Capstone Project- Predicting the 2026 World Cup impact on tourism**
-![2026 FIFA World Cup](https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/2026_FIFA_World_Cup.svg/800px-2026_FIFA_World_Cup.svg.png)
+![2026 FIFA World Cup](images/unnamed.jpg)
+
 
 
 ## **Background**
