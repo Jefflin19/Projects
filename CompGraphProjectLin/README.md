@@ -10,61 +10,22 @@ Bezier, Phong Model, Multitexture, 3D Transform
 
 ##Computer Graphics Techniques
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 ### 1. Importing 3D Models
 
 imported eight models from Sketchfab, including:
 
-Death Star
-
-Star Destroyer
-
-Millennium Falcon
-
-TIE Fighter
-
-Space Model
-
-Sun
-
-Earth
-
-Allied Spaceship
+Death Star, Star Destroyer, Millennium Falcon, TIE Fighter, Space Model, Sun, Earth, Allied Spaceship
 
 Each model was downloaded in glTF format and integrated into the project. The index.js file was used to set up model rendering and import them into the scene.
+
 
 ### 2. 3D Model Transformations
 
 We applied scaling, translation, and rotation to adjust model sizes and positioning:
 
 Scaling Adjustments
-
-Model
-
-Scale Factor
-
-Space
-
-400x
-
-Earth
-
-5x
-
-Sun
-
-3.5x
-
-Star Destroyer
-
-0.03x
-
-TIE Fighter
-
-1.5x
-
-Millennium Falcon
-
-0.025x
 
 Translation Example:
 
@@ -77,6 +38,7 @@ Rotation Example (Earth Rotation by 20 Degrees):
 
 let rotationAngle = Math.PI / 9; // ~20 degrees
 model.rotation.set(rotationAngle, 0, 0);
+
 
 ### 3. Color Adjustments and Phong Model
 
