@@ -2,7 +2,7 @@
 
 # **Project Overview**
 
-This project creates a interactive 3D story. I developed a Star Wars-themed action scene using computer graphics techniques such as Bezier curves, translations, audio, multitexturing, and more. The final product is an immersive space scene viewed from a first-person perspective.
+This project creates a interactive 3D story. I developed a Star Wars-themed action scene using computer graphics techniques such as Bezier curves, translations, audio, multitexturing, and more. The final product is an immersive space scene viewed from a first-person perspective. It was developed in codepen and then exported. 
 
 ## Keywords
 
@@ -93,4 +93,5 @@ Enhanced AI-driven enemy movements.
 More dynamic lighting effects.
 
 Interactive user controls for ship navigation.
-
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+## Open index.html in Live Server on Visual Studio Code to View the Scene
